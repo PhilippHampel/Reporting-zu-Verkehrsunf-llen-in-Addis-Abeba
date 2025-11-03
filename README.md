@@ -1,2 +1,3 @@
 Das hier ist ein Reporting zu Verkehrsunfällen in Addis Abeba.
-Zum erstellen der Diagramme einefach die main.py Starten
+
+Zum erstellen der Diagramme einefach die main.py im gleichen Ordner wie die Addis_Ababa_city_RTA.csv Starten

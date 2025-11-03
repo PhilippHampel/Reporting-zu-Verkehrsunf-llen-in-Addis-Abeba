@@ -303,7 +303,7 @@ for i, severity in enumerate(severities):
 
         plt.bar(x[i], pct, bottom=bottom, color=color, edgecolor="black")
         plt.text(x[i], bottom + pct / 2, f"{pct:.1f}%",
-                 ha="center", va="center", fontsize=8, color="black", fontweight="bold")
+                 ha="center", va="center", fontsize=16, color="black", fontweight="bold")  # Verdoppelt (war 8)
         bottom += pct
         legend_labels.add(cause)
 
@@ -317,32 +317,47 @@ plt.ylim(0, 100)
 ax = plt.gca()
 ax.tick_params(axis='y', labelsize=20)  # Verdoppelt (Standard ~10)
 
-# Legende mit deutschen Bezeichnungen
-legend_handles = []
+# Legende entfernt vom Hauptdiagramm
+
+plt.tight_layout()
+plt.savefig(os.path.join(folders["stacked"], "unfallursachen_nach_schweregrad_prozent_sortiert_alles.png"), dpi=300)
+plt.close()
+
+# =======================================================================================
+# 6c) Separate Legende für erstes gestapeltes Balkendiagramm (mit Zusammenfassung)
+# =======================================================================================
+fig_legend1, ax_legend1 = plt.subplots(figsize=(6, 8))  # Schmaler aber höher für eine Spalte
+ax_legend1.axis('off')
+
+# Erstelle Legende mit Ursachen aus dem ersten Diagramm
+legend_elements_1 = []
 for cause in global_cause_order:
     if cause in legend_labels:
         label = "Sonstiges (<5%)" if cause == "Other (<5%)" else translate_cause(cause)
-        legend_handles.append(Patch(facecolor=color_map.get(cause, "gray"), edgecolor="black", label=label))
-if "Other (<5%)" in legend_labels:
-    legend_handles.append(Patch(facecolor=other_color, edgecolor="black", label="Sonstiges (<5%)"))
+        color = other_color if cause == "Other (<5%)" else color_map.get(cause, "gray")
+        legend_elements_1.append(Patch(facecolor=color, edgecolor="black", label=label))
+if "Other (<5%)" in legend_labels and "Other (<5%)" not in global_cause_order:
+    legend_elements_1.append(Patch(facecolor=other_color, edgecolor="black", label="Sonstiges (<5%)"))
 
-plt.legend(
-    handles=legend_handles,
-    title="Ursache",
-    title_fontsize=36,  # Titel der Legende vergrößert
-    bbox_to_anchor=(1.02, 1),
-    loc="upper left",
-    borderaxespad=0.,
-    fontsize=22  # Wie Ordner 5 (war "small")
-)
+# Erstelle die Legende in der Mitte des Bildes mit nur einer Spalte
+legend1 = ax_legend1.legend(handles=legend_elements_1, 
+                           loc='center',
+                           title="Unfallursachen - Legende\n(Zusammengefasst)",
+                           title_fontsize=24,
+                           fontsize=18,
+                           frameon=True,
+                           fancybox=True,
+                           shadow=True,
+                           ncol=1)  # Nur eine Spalte - alles untereinander
+
 plt.tight_layout()
-plt.savefig(os.path.join(folders["stacked"], "unfallursachen_nach_schweregrad_prozent_sortiert_alles.png"), dpi=300, bbox_inches='tight', pad_inches=0.1)
+plt.savefig(os.path.join(folders["stacked"], "unfallursachen_legende_zusammengefasst.png"), dpi=300, bbox_inches='tight')
 plt.close()
 
 # =======================================================================================
 # 6b) Zusätzliches Diagramm: alle Klassen (ohne Zusammenfassen), nur >=5% beschriftet
 # =======================================================================================
-plt.figure(figsize=(16, 10))  # Größer für die verdoppelten Schriften
+plt.figure(figsize=(12, 8))  # Angepasst für bessere Proportionen
 legend_labels_all = set()
 
 for i, severity in enumerate(severities):
@@ -356,14 +371,17 @@ for i, severity in enumerate(severities):
         plt.bar(x[i], pct, bottom=bottom, color=color, edgecolor="black")
         if pct >= 5:
             plt.text(x[i], bottom + pct / 2, f"{pct:.1f}%",
-                     ha="center", va="center", fontsize=8, color="black", fontweight="bold")
+                     ha="center", va="center", fontsize=16, color="black", fontweight="bold")  # Verdoppelt (war 8)
         bottom += pct
         legend_labels_all.add(cause)
 
 plt.xticks(x, severities_deutsch, rotation=45, ha="right", fontsize=20)  # Verdoppelt (ursprünglich 10)
 plt.ylabel("Anteil (%)", fontsize=24)  # Verdoppelt (ursprünglich 12)
-plt.title("Verteilung der Unfallursachen pro Unfallschwere (in %) – alle Klassen",
-          fontsize=28, weight="bold")  # Verdoppelt (ursprünglich 14)
+
+# HIER IST DIE ÄNDERUNG: pad=20 erhöht den Abstand zwischen Titel und Diagramm
+plt.title("Verteilung der Unfallursachen pro Unfallschwere (in %)",
+          fontsize=28, weight="bold", pad=20)  # pad=20 für mehr Abstand nach oben
+
 plt.ylim(0, 100)
 
 # Y-Achsen-Tick-Labels vergrößern
@@ -377,17 +395,40 @@ for cause in global_cause_order:
         legend_handles_all.append(Patch(facecolor=color_map.get(cause, "gray"), edgecolor="black", 
                                         label=translate_cause(cause)))
 
-plt.legend(
-    handles=legend_handles_all,
-    title="Ursache",
-    title_fontsize=36,  # Titel der Legende vergrößert
-    bbox_to_anchor=(1.02, 1),
-    loc="upper left",
-    borderaxespad=0.,
-    fontsize=22  # Wie Ordner 5 (war "small")
-)
+# Legende entfernt vom Hauptdiagramm
+
 plt.tight_layout()
-plt.savefig(os.path.join(folders["stacked"], "unfallursachen_nach_schweregrad_prozent_sortiert_alle_klassen.png"), dpi=300, bbox_inches='tight', pad_inches=0.1)
+plt.savefig(os.path.join(folders["stacked"], "unfallursachen_nach_schweregrad_prozent_sortiert_alle_klassen.png"), 
+           dpi=300, bbox_inches='tight', pad_inches=0.3)  # pad_inches hinzugefügt gegen Abschneiden
+plt.close()
+
+# =======================================================================================
+# 6d) Separate Legende für zweites gestapeltes Balkendiagramm (alle Klassen)
+# =======================================================================================
+fig_legend2, ax_legend2 = plt.subplots(figsize=(6, 12))  # Schmaler aber höher für eine Spalte mit vielen Einträgen
+ax_legend2.axis('off')
+
+# Erstelle Legende mit Ursachen aus dem zweiten Diagramm (alle Klassen)
+legend_elements_2 = []
+for cause in global_cause_order:
+    if cause in legend_labels_all:
+        label = translate_cause(cause)
+        color = color_map.get(cause, "gray")
+        legend_elements_2.append(Patch(facecolor=color, edgecolor="black", label=label))
+
+# Erstelle die Legende in der Mitte des Bildes mit nur einer Spalte
+legend2 = ax_legend2.legend(handles=legend_elements_2, 
+                           loc='center',
+                           title="Unfallursachen - Legende\n(Alle Klassen)",
+                           title_fontsize=24,
+                           fontsize=18,
+                           frameon=True,
+                           fancybox=True,
+                           shadow=True,
+                           ncol=1)  # Nur eine Spalte - alles untereinander
+
+plt.tight_layout()
+plt.savefig(os.path.join(folders["stacked"], "unfallursachen_legende_alle_klassen.png"), dpi=300, bbox_inches='tight')
 plt.close()
 
 # =======================================================================================
